@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nokia-snake"
+version = "1.0.0"
+description = "Terminal emulation of the original 1997 Nokia Snake game by Taneli Armanto"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+authors = [
+    { name = "Taneli Armanto Tribute / Retro Terminal Project" }
+]
+keywords = ["snake", "nokia", "terminal", "curses", "retro", "game", "arcade"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Environment :: Console :: Curses",
+    "Topic :: Games/Entertainment :: Arcade",
+]
+
+[project.scripts]
+nokia-snake = "nokia_snake.main:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["nokia_snake*"]
