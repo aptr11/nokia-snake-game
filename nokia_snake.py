@@ -61,11 +61,45 @@ Authentic Nokia Keypad:
                         help="Disable buzzer audio")
     parser.add_argument("--demo", action="store_true",
                         help="Launch in autoplay demo mode (snake plays itself using AI)")
+    parser.add_argument("--web", action="store_true",
+                        help="Launch playable web version in your browser")
+    parser.add_argument("--port", type=int, default=8080,
+                        help="Port for local web server (default: 8080)")
     parser.add_argument("-v", "--version", action="version", version=f"Nokia Snake {VERSION}")
     return parser.parse_args()
 
 def main():
     args = parse_args()
+
+    if args.web:
+        import http.server
+        import socketserver
+        import webbrowser
+        from functools import partial
+
+        web_dir = current_dir
+        port = args.port
+        handler = partial(http.server.SimpleHTTPRequestHandler, directory=web_dir)
+
+        class ReusableServer(socketserver.TCPServer):
+            allow_reuse_address = True
+
+        try:
+            with ReusableServer(("", port), handler) as httpd:
+                url = f"http://localhost:{port}"
+                print("=" * 60)
+                print(f"🐍 Nokia Snake & Blockade Web App")
+                print(f"Local Server running at: {url}")
+                print(f"Opening browser... (Press Ctrl+C to stop)")
+                print("=" * 60)
+                webbrowser.open(url)
+                httpd.serve_forever()
+        except KeyboardInterrupt:
+            print("\nServer stopped.")
+            sys.exit(0)
+        except OSError as e:
+            print(f"Error starting server on port {port}: {e}")
+            sys.exit(1)
 
     # Ensure TERM is set properly if launched in bare terminal
     if os.environ.get("TERM") in (None, "", "dumb"):

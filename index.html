@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Nokia Snake & Blockade (1976 / 1997)</title>
+  <meta name="description" content="Authentic retro mobile phone emulation of Nokia Snake (1997) and Blockade (1976) playable directly in your browser.">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐍</text></svg>">
+</head>
+<body data-theme="classic_green">
+
+  <header class="game-header">
+    <h1>Nokia Snake</h1>
+    <div class="subtitle">1997 Nokia 6110 / 3310 & Blockade (1976)</div>
+  </header>
+
+  <main class="main-wrapper">
+    <!-- Nokia Phone Casing -->
+    <div class="phone-casing" id="phoneCasing">
+      
+      <!-- Top Speaker Grille -->
+      <div class="speaker-grill">
+        <div class="speaker-slit"></div>
+        <div class="speaker-slit"></div>
+        <div class="speaker-slit"></div>
+        <div class="speaker-slit"></div>
+      </div>
+
+      <!-- Nokia Logo -->
+      <div class="nokia-logo">NOKIA</div>
+
+      <!-- Screen Bezel Frame -->
+      <div class="screen-frame">
+        <div class="lcd-screen" id="lcdScreen">
+          <canvas id="gameCanvas" width="320" height="168"></canvas>
+        </div>
+      </div>
+
+      <!-- Keypad -->
+      <div class="keypad-container">
+        <!-- Navi & Function Keys -->
+        <div class="navi-section">
+          <button class="key-c" data-key="BACK" title="Back / Clear [C]">C</button>
+          <button class="key-navi-main" data-key="SELECT" title="Navi-Key / Select [Enter]">NAVI</button>
+          <button class="key-nav" data-key="SELECT" title="Scroll [Space]">&lt; &gt;</button>
+        </div>
+
+        <!-- 3x4 Numeric Keypad -->
+        <div class="numpad-grid">
+          <button class="numpad-btn" data-key="1">
+            <span class="num">1</span>
+            <span class="sub">_</span>
+          </button>
+          <button class="numpad-btn" data-key="UP" title="Move Up [2 / ArrowUp / W]">
+            <span class="num">2</span>
+            <span class="sub">▲</span>
+          </button>
+          <button class="numpad-btn" data-key="3">
+            <span class="num">3</span>
+            <span class="sub">def</span>
+          </button>
+
+          <button class="numpad-btn" data-key="LEFT" title="Move Left [4 / ArrowLeft / A]">
+            <span class="num">4</span>
+            <span class="sub">◄</span>
+          </button>
+          <button class="numpad-btn" data-key="SELECT" title="Select [5 / Enter]">
+            <span class="num">5</span>
+            <span class="sub">jkl</span>
+          </button>
+          <button class="numpad-btn" data-key="RIGHT" title="Move Right [6 / ArrowRight / D]">
+            <span class="num">6</span>
+            <span class="sub">►</span>
+          </button>
+
+          <button class="numpad-btn" data-key="7">
+            <span class="num">7</span>
+            <span class="sub">pqrs</span>
+          </button>
+          <button class="numpad-btn" data-key="DOWN" title="Move Down [8 / ArrowDown / S]">
+            <span class="num">8</span>
+            <span class="sub">▼</span>
+          </button>
+          <button class="numpad-btn" data-key="9">
+            <span class="num">9</span>
+            <span class="sub">wxyz</span>
+          </button>
+
+          <button class="numpad-btn" data-key="*">
+            <span class="num">*</span>
+            <span class="sub">+</span>
+          </button>
+          <button class="numpad-btn" data-key="0">
+            <span class="num">0</span>
+            <span class="sub">_</span>
+          </button>
+          <button class="numpad-btn" data-key="#">
+            <span class="num">#</span>
+            <span class="sub">⇪</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Web Toolbar -->
+    <div class="toolbar-controls">
+      <button class="tool-btn" onclick="window.app.demoMode = !window.app.demoMode; window.app.appState = 'playing';">▶ Autoplay Demo</button>
+      <button class="tool-btn" onclick="window.app.toggleViewMode();">📱 Phone / LCD View [V]</button>
+      <button class="tool-btn" onclick="window.app.cycleTheme();">🎨 Theme [T]</button>
+      <button class="tool-btn" onclick="window.app.sound.toggle();">🔊 Sound [M]</button>
+      <button class="tool-btn" onclick="window.app.game.togglePause();">⏸ Pause [P]</button>
+      <button class="tool-btn" onclick="window.app.appState = 'menu';">📋 Menu [Q]</button>
+    </div>
+
+    <!-- Footer Description -->
+    <footer class="footer-info">
+      <div>Keyboard: <strong>2/8/4/6</strong>, <strong>Arrows</strong>, or <strong>WASD</strong>. Swipe screen on mobile.</div>
+      <div>Source code on <a href="https://github.com/aptr11/nokia-snake-game" target="_blank" rel="noopener">GitHub</a></div>
+    </footer>
+  </main>
+
+  <!-- Game Scripts -->
+  <script src="js/audio.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/bot.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

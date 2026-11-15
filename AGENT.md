@@ -20,6 +20,14 @@ nokia-snake/
 ├── pyproject.toml           # Package configuration & metadata
 ├── README.md                # Player-facing guide
 ├── AGENT.md                 # Technical architecture (this file)
+├── index.html               # Web application entrypoint (GitHub Pages ready)
+├── css/
+│   └── style.css            # Nokia phone casing, LCD filter, themes & mobile layout
+├── js/
+│   ├── audio.js             # Web Audio API square-wave synthesizer
+│   ├── game.js              # JavaScript game logic port (Snake I, II, Blockade)
+│   ├── bot.js               # BFS pathfinder and flood-fill survival bot
+│   └── app.js               # Canvas renderer, keypad bindings & localStorage
 ├── nokia_snake/
 │   ├── __init__.py          # Package initialization
 │   ├── config.py            # Global constants, levels, delays, color themes

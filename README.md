@@ -35,6 +35,7 @@ Built entirely in Python using standard library modules (`curses`, `wave`, `stru
 
 ## 📋 Table of Contents
 
+- [Play in Your Web Browser](#-play-in-your-web-browser)
 - [Features](#-features)
 - [Requirements](#-requirements)
 - [Installation](#-installation)
@@ -47,6 +48,32 @@ Built entirely in Python using standard library modules (`curses`, `wave`, `stru
 - [Running Tests](#-running-tests)
 - [Project Architecture](#-project-architecture)
 - [History & Credits](#-history--credits)
+
+---
+
+## 🌐 Play in Your Web Browser
+
+Play Nokia Snake & Blockade directly in any web browser without needing a terminal!
+
+### 1. Live Online (GitHub Pages)
+Once enabled in repo settings, the web version is accessible directly at:  
+👉 **[https://aptr11.github.io/nokia-snake-game/](https://aptr11.github.io/nokia-snake-game/)**
+
+*(To enable on GitHub: Go to `Settings` → `Pages` → Build and deployment: `Deploy from a branch` → Select `main` / `/(root)` → Click Save).*
+
+### 2. Local Browser Launch via CLI
+Run from your terminal:
+```bash
+nokia-snake --web
+```
+Or with Python:
+```bash
+python3 nokia_snake.py --web
+```
+This automatically starts a local server and opens your browser at `http://localhost:8080`.
+
+### 3. Open Offline Directly
+Double-click [index.html](file:///home/parallels/nokia-snake/index.html) or open it in any web browser. Zero build steps, bundlers, or internet connection required! Mobile touch gestures and keypad tapping are fully supported.
 
 ---
 
