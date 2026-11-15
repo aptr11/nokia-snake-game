@@ -46,11 +46,13 @@ Defines game constants:
 - `THEMES`: Color definitions for 256-color and 8-color terminal palettes.
 
 ### `nokia_snake/game.py`
-Encapsulates state and game rules:
+Encapsulates state and game rules for Snake I, Snake II, and Blockade:
 - `snake`: Ordered list of `(x, y)` tuples, where index `0` is the head and index `-1` is the tail.
-- `input_queue`: A `deque(maxlen=3)` that stores valid directional inputs. Prevents accidental reversal (180° turns into the neck) and buffers quick turns.
+- `p2_snake`: Secondary snake trail used for the Player 2 / CPU duel in Blockade (1976).
+- `input_queue` & `p2_input_queue`: Buffered direction queues (`deque(maxlen=3)`) preventing 180° immediate reversal.
 - `update()`: Advances simulation if the elapsed time exceeds `tick_delay`.
-- Dynamic acceleration: Decreases `tick_delay` slightly as pellets are eaten.
+- Dynamic acceleration: Decreases `tick_delay` slightly as pellets are eaten (Snake I/II).
+- Match round manager: Handles multi-round scoring (`p1_wins`, `p2_wins`, `match_target`) for Blockade.
 
 ### `nokia_snake/renderer.py`
 Handles all visual presentation:

@@ -10,7 +10,8 @@ import time
 
 from .config import (
     DIR_UP, DIR_DOWN, DIR_LEFT, DIR_RIGHT,
-    VIEW_PHONE, VIEW_LCD
+    VIEW_PHONE, VIEW_LCD, MODE_BLOCKADE,
+    BLOCKADE_OPPONENT_CPU, BLOCKADE_OPPONENT_HUMAN
 )
 from .audio import SoundEngine
 from .game import SnakeGame
@@ -105,39 +106,24 @@ class NokiaSnakeApp:
     # -------------------------------------------------------------
 
     def _update_playing(self, key: int):
-        # Directional controls
-        if self.demo_mode and not self.game.is_paused:
-            bot_dir = self.bot.get_next_direction()
-            if bot_dir:
-                self.game.queue_direction(bot_dir)
-
-        if key in (curses.KEY_UP, ord('2'), ord('w'), ord('W'), ord('k'), ord('K')):
-            self.demo_mode = False  # Player takes over
-            self.game.queue_direction(DIR_UP)
-            self.renderer.highlight_key("UP")
-        elif key in (curses.KEY_DOWN, ord('8'), ord('s'), ord('S'), ord('j'), ord('J')):
-            self.demo_mode = False
-            self.game.queue_direction(DIR_DOWN)
-            self.renderer.highlight_key("DOWN")
-        elif key in (curses.KEY_LEFT, ord('4'), ord('a'), ord('A'), ord('h'), ord('H')):
-            self.demo_mode = False
-            self.game.queue_direction(DIR_LEFT)
-            self.renderer.highlight_key("LEFT")
-        elif key in (curses.KEY_RIGHT, ord('6'), ord('d'), ord('D'), ord('l'), ord('L')):
-            self.demo_mode = False
-            self.game.queue_direction(DIR_RIGHT)
-            self.renderer.highlight_key("RIGHT")
+        is_blockade = (self.game.game_mode == MODE_BLOCKADE)
+        is_blockade_cpu = is_blockade and (self.game.blockade_opponent == BLOCKADE_OPPONENT_CPU)
+        is_blockade_2p = is_blockade and (self.game.blockade_opponent == BLOCKADE_OPPONENT_HUMAN)
 
         # In-game Hotkeys
-        elif key in (ord('p'), ord('P'), ord(' ')):
+        if key in (ord('p'), ord('P'), ord(' ')):
             self.game.toggle_pause()
             self.sound.play_click()
+            return
         elif key in (ord('m'), ord('M')):
             self.sound.toggle()
+            return
         elif key in (ord('v'), ord('V')):
             self.renderer.toggle_view()
+            return
         elif key in (ord('t'), ord('T')):
             self.renderer.cycle_theme()
+            return
         elif key in (ord('q'), ord('Q'), 27):  # 27 = Esc
             # Pause and return to menu
             self.game.is_paused = True
@@ -145,6 +131,61 @@ class NokiaSnakeApp:
             self.menu.has_active_game = True
             self.menu.selected_index = 0
             return
+
+        # Autoplay / CPU logic
+        if not self.game.is_paused and not self.game.is_round_over:
+            if self.demo_mode and not is_blockade:
+                bot_dir = self.bot.get_next_direction()
+                if bot_dir:
+                    self.game.queue_direction(bot_dir)
+            elif is_blockade_cpu:
+                bot_p2 = self.bot.get_next_direction_p2()
+                if bot_p2:
+                    self.game.queue_direction_p2(bot_p2)
+
+        # Directional controls
+        if is_blockade_2p:
+            # Player 1 controls (WASD / 2,4,6,8)
+            if key in (ord('w'), ord('W'), ord('2')):
+                self.game.queue_direction(DIR_UP)
+                self.renderer.highlight_key("UP")
+            elif key in (ord('s'), ord('S'), ord('8')):
+                self.game.queue_direction(DIR_DOWN)
+                self.renderer.highlight_key("DOWN")
+            elif key in (ord('a'), ord('A'), ord('4')):
+                self.game.queue_direction(DIR_LEFT)
+                self.renderer.highlight_key("LEFT")
+            elif key in (ord('d'), ord('D'), ord('6')):
+                self.game.queue_direction(DIR_RIGHT)
+                self.renderer.highlight_key("RIGHT")
+
+            # Player 2 controls (Arrow keys / IJKL)
+            elif key in (curses.KEY_UP, ord('i'), ord('I')):
+                self.game.queue_direction_p2(DIR_UP)
+            elif key in (curses.KEY_DOWN, ord('k'), ord('K')):
+                self.game.queue_direction_p2(DIR_DOWN)
+            elif key in (curses.KEY_LEFT, ord('j'), ord('J')):
+                self.game.queue_direction_p2(DIR_LEFT)
+            elif key in (curses.KEY_RIGHT, ord('l'), ord('L')):
+                self.game.queue_direction_p2(DIR_RIGHT)
+        else:
+            # Single player (Snake or Blockade vs CPU)
+            if key in (curses.KEY_UP, ord('2'), ord('w'), ord('W'), ord('k'), ord('K')):
+                self.demo_mode = False  # Player takes over
+                self.game.queue_direction(DIR_UP)
+                self.renderer.highlight_key("UP")
+            elif key in (curses.KEY_DOWN, ord('8'), ord('s'), ord('S'), ord('j'), ord('J')):
+                self.demo_mode = False
+                self.game.queue_direction(DIR_DOWN)
+                self.renderer.highlight_key("DOWN")
+            elif key in (curses.KEY_LEFT, ord('4'), ord('a'), ord('A'), ord('h'), ord('H')):
+                self.demo_mode = False
+                self.game.queue_direction(DIR_LEFT)
+                self.renderer.highlight_key("LEFT")
+            elif key in (curses.KEY_RIGHT, ord('6'), ord('d'), ord('D'), ord('l'), ord('L')):
+                self.demo_mode = False
+                self.game.queue_direction(DIR_RIGHT)
+                self.renderer.highlight_key("RIGHT")
 
         # Advance game logic step
         self.game.update()
@@ -166,12 +207,12 @@ class NokiaSnakeApp:
 
     def _update_game_over(self, key: int):
         highest = self.highscores.get_highest_score()
-        is_new_record = self.game.score > highest and self.game.score > 0
+        is_new_record = (self.game.score > highest and self.game.score > 0 and self.game.game_mode != MODE_BLOCKADE)
 
         # Wait for keypress
         if key != -1:
             self.sound.play_click()
-            if self.highscores.is_high_score(self.game.score):
+            if self.game.game_mode != MODE_BLOCKADE and self.highscores.is_high_score(self.game.score):
                 self.sound.play_highscore()
                 self.app_state = APP_STATE_NAME_ENTRY
                 self.name_buffer = ""
@@ -179,9 +220,8 @@ class NokiaSnakeApp:
                 self.app_state = APP_STATE_MENU
             return
 
-        highest = self.highscores.get_highest_score()
         self.renderer.render_game(self.game, highest)
-        self.renderer.render_game_over(self.game.score, highest, is_new_record)
+        self.renderer.render_game_over(self.game, highest, is_new_record)
 
     # -------------------------------------------------------------
     # High Score Initials Entry State

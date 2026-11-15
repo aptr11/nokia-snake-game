@@ -54,9 +54,10 @@ Built entirely in Python using standard library modules (`curses`, `wave`, `stru
 
 - **Iconic Phone Bezel Mode**: Full Nokia 3310 phone chassis with curved housing, speaker slit, Navi-key, and a **backlit keypad that illuminates in real-time** when you press directional keys.
 - **Fullscreen Retro LCD Mode**: Pure, distraction-free monochrome LCD screen with Nokia battery indicator `[■■■■]`, signal strength `ıll`, level, and score.
-- **Two Historical Game Modes**:
+- **Three Historical Game Modes**:
   - **Snake 1997 (Nokia 6110)**: Solid outer boundary walls, classic single-dot growth, strict original collision rules.
   - **Snake II (Nokia 3310)**: Screen edge wraparound, 5 distinct mazes (*Tunnel*, *Fortresses*, *Double Rails*, *Labyrinth*), and timed bonus insects with countdown timer bars.
+  - **Blockade (1976 Gremlin Arcade)**: The arcade original that launched the entire genre! Play a survival duel (vs CPU or 2-Player local) where both lines grow permanently and never shrink. Trap your opponent across multi-round matches.
 - **Authentic Monophonic Sound Engine**:
   - Real-time synthesized square waves matching the exact frequency and timbre of classic Nokia piezoelectric buzzers.
   - Includes opening **Nokia Ringtone** melody, eating blip (1046 Hz), bonus double chirps, crash buzzes, and high-score fanfares.
@@ -129,14 +130,14 @@ python3 nokia_snake.py
 ### Command-Line Flags
 
 ```text
-usage: nokia_snake.py [-h] [-l {1,2,3,4,5,6,7,8,9}] [-m {classic,snake2}]
+usage: nokia_snake.py [-h] [-l {1,2,3,4,5,6,7,8,9}] [-m {classic,snake2,blockade}]
                       [-t {classic_green,monochrome,matrix,amber}] [--lcd]
                       [--no-sound] [--demo] [-v]
 
 options:
   -h, --help            Show this help message and exit
   -l, --level LEVEL     Starting skill level (1-9, default: 5)
-  -m, --mode MODE       Game mode: 'classic' (1997) or 'snake2' (2000)
+  -m, --mode MODE       Game mode: 'classic' (1997), 'snake2' (2000), or 'blockade' (1976)
   -t, --theme THEME     LCD theme: 'classic_green', 'monochrome', 'matrix', 'amber'
   --lcd                 Launch directly in Fullscreen LCD mode (no phone frame)
   --no-sound            Disable buzzer sound
@@ -152,6 +153,9 @@ nokia-snake -l 9 -m classic
 
 # Play Snake II with mazes and edge wraparound:
 nokia-snake -m snake2
+
+# Play Blockade (1976) duel against the CPU:
+nokia-snake -m blockade
 
 # Fullscreen LCD mode in Matrix Phosphor theme:
 nokia-snake --lcd -t matrix
@@ -174,6 +178,12 @@ nokia-snake --demo
    - Supports 5 distinct maze configurations: *Open Wrap*, *Tunnel*, *Fortresses*, *Double Rails*, and *Labyrinth*.
    - When no wall blocks the screen perimeter, the snake **wraps around** to the opposite edge.
    - After every 5 pellets eaten, a **bonus insect** appears with a countdown bar. Consuming it quickly awards major bonus points!
+3. **Blockade (1976 Gremlin Arcade)**:
+   - The 1976 arcade progenitor of all snake games.
+   - Two players (Player 1 vs CPU or 2-Player local) move simultaneously on the grid.
+   - **No food**: Trails grow continuously with every step and never disappear!
+   - Trap your opponent: crashing into any border or existing trail loses the round.
+   - First to reach the target round wins (configurable: 3, 5, or 7) wins the match.
 
 ### Controls Reference
 

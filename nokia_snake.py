@@ -25,7 +25,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 if current_dir not in sys.path:
     sys.path.insert(0, current_dir)
 
-from nokia_snake.config import VERSION, THEMES, MODE_SNAKE1, MODE_SNAKE2, VIEW_PHONE, VIEW_LCD
+from nokia_snake.config import VERSION, THEMES, MODE_SNAKE1, MODE_SNAKE2, MODE_BLOCKADE, VIEW_PHONE, VIEW_LCD
 from nokia_snake.main import NokiaSnakeApp
 import curses
 
@@ -51,8 +51,8 @@ Authentic Nokia Keypad:
     )
     parser.add_argument("-l", "--level", type=int, choices=range(1, 10), default=5,
                         help="Starting skill level (1-9)")
-    parser.add_argument("-m", "--mode", choices=["classic", "snake2"], default="classic",
-                        help="Game mode: 'classic' (Nokia 6110) or 'snake2' (Nokia 3310)")
+    parser.add_argument("-m", "--mode", choices=["classic", "snake2", "blockade"], default="classic",
+                        help="Game mode: 'classic' (1997), 'snake2' (2000), or 'blockade' (1976)")
     parser.add_argument("-t", "--theme", choices=list(THEMES.keys()), default="classic_green",
                         help="LCD Color Theme")
     parser.add_argument("--lcd", action="store_true",
@@ -78,7 +78,8 @@ def main():
         if args.level:
             app.game.set_level(args.level)
         if args.mode:
-            app.game.set_mode(MODE_SNAKE1 if args.mode == "classic" else MODE_SNAKE2)
+            mode_map = {"classic": MODE_SNAKE1, "snake2": MODE_SNAKE2, "blockade": MODE_BLOCKADE}
+            app.game.set_mode(mode_map.get(args.mode, MODE_SNAKE1))
         if args.theme:
             app.renderer.set_theme(args.theme)
         if args.lcd:

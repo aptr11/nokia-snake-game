@@ -1,6 +1,9 @@
 """
 Nokia Menu Controller and Sub-screens.
-Implements the authentic Nokia phone menu system.
+Implements the authentic Nokia phone menu system with support for:
+1. Snake 1997 (Nokia 6110)
+2. Snake II (Nokia 3310)
+3. Blockade (1976 Gremlin Arcade)
 """
 
 import curses
@@ -8,7 +11,9 @@ import time
 from typing import List, Tuple, Dict, Any, Optional
 
 from .config import (
-    THEMES, VIEW_PHONE, VIEW_LCD, MODE_SNAKE1, MODE_SNAKE2
+    THEMES, VIEW_PHONE, VIEW_LCD,
+    MODE_SNAKE1, MODE_SNAKE2, MODE_BLOCKADE,
+    BLOCKADE_OPPONENT_CPU, BLOCKADE_OPPONENT_HUMAN
 )
 from .game import SnakeGame
 from .highscores import HighScoreManager
@@ -17,12 +22,15 @@ from .audio import SoundEngine
 
 # Menu state IDs
 STATE_MAIN_MENU = "main_menu"
-STATE_LEVEL_SELECT = "level_select"
-STATE_MODE_SELECT = "mode_select"
-STATE_MAZE_SELECT = "maze_select"
 STATE_HIGHSCORES = "highscores"
-STATE_SETTINGS = "settings"
 STATE_HELP = "help"
+
+MODES = [MODE_SNAKE1, MODE_SNAKE2, MODE_BLOCKADE]
+MODE_LABELS = {
+    MODE_SNAKE1: "Snake 1997",
+    MODE_SNAKE2: "Snake II",
+    MODE_BLOCKADE: "Blockade 1976",
+}
 
 class MenuController:
     def __init__(self, game: SnakeGame, renderer: Renderer, highscores: HighScoreManager, sound: SoundEngine):
@@ -44,11 +52,15 @@ class MenuController:
         items.append(("New Game", "new_game"))
         items.append((f"Skill Level: < {self.game.level} >", "level"))
         
-        mode_label = "Snake 1997" if self.game.game_mode == MODE_SNAKE1 else "Snake II"
+        mode_label = MODE_LABELS.get(self.game.game_mode, "Snake 1997")
         items.append((f"Game Mode: < {mode_label} >", "mode"))
 
         if self.game.game_mode == MODE_SNAKE2:
             items.append((f"Maze: < {self.game.maze.name} >", "maze"))
+        elif self.game.game_mode == MODE_BLOCKADE:
+            opp_label = "vs CPU" if self.game.blockade_opponent == BLOCKADE_OPPONENT_CPU else "2-Player Local"
+            items.append((f"Opponent: < {opp_label} >", "blockade_opp"))
+            items.append((f"Match: < First to {self.game.match_target} >", "blockade_target"))
 
         items.append(("High Scores", "highscores"))
 
@@ -66,14 +78,6 @@ class MenuController:
         return items
 
     def handle_input(self, key: int) -> Optional[str]:
-        """
-        Handle a menu key event.
-        Returns:
-            "start_game": start a fresh game
-            "resume_game": resume paused game
-            "quit": exit application
-            None: remain in menu
-        """
         if self.current_state == STATE_MAIN_MENU:
             return self._handle_main_menu(key)
         elif self.current_state == STATE_HIGHSCORES:
@@ -81,6 +85,10 @@ class MenuController:
         elif self.current_state == STATE_HELP:
             return self._handle_help_view(key)
         return None
+
+    def _cycle_mode(self, delta: int):
+        idx = (MODES.index(self.game.game_mode) + delta) % len(MODES)
+        self.game.set_mode(MODES[idx])
 
     def _handle_main_menu(self, key: int) -> Optional[str]:
         items = self.get_main_menu_items()
@@ -100,6 +108,10 @@ class MenuController:
             self.selected_index = (self.selected_index + 1) % num_items
             return None
 
+        # Safety bound check
+        if self.selected_index >= num_items:
+            self.selected_index = 0
+
         current_label, action = items[self.selected_index]
 
         # Navigation LEFT (adjust option)
@@ -109,10 +121,13 @@ class MenuController:
             if action == "level":
                 self.game.set_level(self.game.level - 1 if self.game.level > 1 else 9)
             elif action == "mode":
-                new_m = MODE_SNAKE2 if self.game.game_mode == MODE_SNAKE1 else MODE_SNAKE1
-                self.game.set_mode(new_m)
+                self._cycle_mode(-1)
             elif action == "maze":
                 self._cycle_maze(-1)
+            elif action == "blockade_opp":
+                self.game.toggle_blockade_opponent()
+            elif action == "blockade_target":
+                self.game.cycle_match_target()
             elif action == "view":
                 self.renderer.toggle_view()
             elif action == "theme":
@@ -128,10 +143,13 @@ class MenuController:
             if action == "level":
                 self.game.set_level(self.game.level + 1 if self.game.level < 9 else 1)
             elif action == "mode":
-                new_m = MODE_SNAKE2 if self.game.game_mode == MODE_SNAKE1 else MODE_SNAKE1
-                self.game.set_mode(new_m)
+                self._cycle_mode(1)
             elif action == "maze":
                 self._cycle_maze(1)
+            elif action == "blockade_opp":
+                self.game.toggle_blockade_opponent()
+            elif action == "blockade_target":
+                self.game.cycle_match_target()
             elif action == "view":
                 self.renderer.toggle_view()
             elif action == "theme":
@@ -152,13 +170,15 @@ class MenuController:
                 self.has_active_game = True
                 return "start_game"
             elif action == "level":
-                # Quick cycle level
                 self.game.set_level(self.game.level + 1 if self.game.level < 9 else 1)
             elif action == "mode":
-                new_m = MODE_SNAKE2 if self.game.game_mode == MODE_SNAKE1 else MODE_SNAKE1
-                self.game.set_mode(new_m)
+                self._cycle_mode(1)
             elif action == "maze":
                 self._cycle_maze(1)
+            elif action == "blockade_opp":
+                self.game.toggle_blockade_opponent()
+            elif action == "blockade_target":
+                self.game.cycle_match_target()
             elif action == "highscores":
                 self.current_state = STATE_HIGHSCORES
             elif action == "view":
@@ -180,7 +200,7 @@ class MenuController:
             self.renderer.cycle_theme()
         elif key in (ord('m'), ord('M')):
             self.sound.toggle()
-        elif key in (ord('q'), ord('Q'), 27):  # 27 = Esc
+        elif key in (ord('q'), ord('Q'), 27):
             return "quit"
 
         return None
@@ -199,7 +219,6 @@ class MenuController:
         self.renderer.set_theme(keys[idx])
 
     def _handle_highscores_view(self, key: int) -> Optional[str]:
-        # Any key returns to main menu
         if key != -1:
             self.sound.play_click()
             self.current_state = STATE_MAIN_MENU
@@ -236,17 +255,17 @@ class MenuController:
 
     def _render_help_screen(self):
         lines = [
-            "NOKIA 6110 SNAKE (1997)",
-            "Original by Taneli Armanto",
+            "MODES:",
+            "  1. Snake 1997 (Nokia 6110)",
+            "  2. Snake II (Nokia 3310)",
+            "  3. Blockade (1976 Arcade)",
             "-------------------------",
-            "Controls:",
-            "  2 / Up   : Move Up",
-            "  8 / Down : Move Down",
-            "  4 / Left : Move Left",
-            "  6 / Right: Move Right",
-            "  WASD & Arrows supported",
-            "  P: Pause  M: Sound",
-            "  V: Switch Phone/LCD View",
-            "  Q: Return to Menu",
+            "CONTROLS:",
+            "  P1: 2/8/4/6, WASD, Arrows",
+            "  P2 (Blockade): Arrows / IJKL",
+            "  P : Pause    M: Sound",
+            "  V : View (Phone / LCD)",
+            "  T : Cycle Color Theme",
+            "  Q : Return to Menu",
         ]
         self.renderer.render_menu("INSTRUCTIONS", lines, 0, "[Press Any Key for Menu]")

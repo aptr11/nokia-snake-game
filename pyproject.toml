@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "nokia-snake"
 version = "1.0.0"
-description = "Terminal emulation of the original 1997 Nokia Snake game by Taneli Armanto"
+description = "Terminal emulation of Nokia Snake (1997) and Blockade (1976) with dual display modes, synthesized buzzer audio, and zero dependencies"
 readme = "README.md"
 requires-python = ">=3.8"
 license = { text = "MIT" }

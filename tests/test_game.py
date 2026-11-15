@@ -13,13 +13,14 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 
 from nokia_snake.config import (
     DIR_UP, DIR_DOWN, DIR_LEFT, DIR_RIGHT,
-    MODE_SNAKE1, MODE_SNAKE2, GRID_WIDTH, GRID_HEIGHT,
+    MODE_SNAKE1, MODE_SNAKE2, MODE_BLOCKADE, GRID_WIDTH, GRID_HEIGHT,
     LEVEL_DELAYS
 )
 from nokia_snake.game import SnakeGame
 from nokia_snake.audio import SoundEngine
 from nokia_snake.highscores import HighScoreManager
 from nokia_snake.mazes import get_mazes
+from nokia_snake.bot import SnakeBot
 
 class DummySoundEngine(SoundEngine):
     """Silent sound engine for testing."""
@@ -187,6 +188,78 @@ class TestAudioWaveGeneration(unittest.TestCase):
         self.assertGreater(len(wav_data), 100)
         # Check WAV header
         self.assertTrue(wav_data.startswith(b"RIFF"))
+
+class TestBlockadeGame(unittest.TestCase):
+    def setUp(self):
+        self.sound = DummySoundEngine()
+        self.game = SnakeGame(self.sound)
+        self.game.set_mode(MODE_BLOCKADE)
+        self.game.reset()
+
+    def test_blockade_initial_state(self):
+        self.assertEqual(len(self.game.snake), 1)
+        self.assertEqual(len(self.game.p2_snake), 1)
+        self.assertEqual(self.game.snake[0], (3, 5))
+        self.assertEqual(self.game.p2_snake[0], (16, 5))
+        self.assertEqual(self.game.direction, DIR_RIGHT)
+        self.assertEqual(self.game.p2_direction, DIR_LEFT)
+        self.assertEqual(self.game.p1_wins, 0)
+        self.assertEqual(self.game.p2_wins, 0)
+        self.assertEqual(self.game.round_number, 1)
+
+    def test_blockade_trail_growth(self):
+        # Step forward: neither snake shrinks, trails grow
+        self.game.last_tick_time = 0
+        self.game.update()
+        self.assertEqual(len(self.game.snake), 2)
+        self.assertEqual(len(self.game.p2_snake), 2)
+        self.assertEqual(self.game.snake[0], (4, 5))
+        self.assertEqual(self.game.p2_snake[0], (15, 5))
+
+    def test_blockade_p1_wall_crash(self):
+        # Move P1 into upper wall
+        self.game.snake = [(3, 0)]
+        self.game.direction = DIR_UP
+        self.game.p2_snake = [(16, 5)]
+        self.game.p2_direction = DIR_DOWN
+
+        self.game.last_tick_time = 0
+        self.game.update()
+
+        self.assertTrue(self.game.is_round_over)
+        self.assertEqual(self.game.round_winner, "p2")
+        self.assertEqual(self.game.p2_wins, 1)
+        self.assertEqual(self.game.p1_wins, 0)
+
+    def test_blockade_match_victory(self):
+        self.game.match_target = 2
+        self.game.p1_wins = 1
+
+        # P2 crashes into wall
+        self.game.snake = [(3, 5)]
+        self.game.direction = DIR_DOWN
+        self.game.p2_snake = [(16, 0)]
+        self.game.p2_direction = DIR_UP
+
+        self.game.last_tick_time = 0
+        self.game.update()
+
+        self.assertTrue(self.game.is_round_over)
+        self.assertEqual(self.game.round_winner, "p1")
+        self.assertEqual(self.game.p1_wins, 2)
+        self.assertTrue(self.game.is_game_over)
+
+    def test_blockade_bot_p2(self):
+        bot = SnakeBot(self.game)
+        for _ in range(5):
+            d2 = bot.get_next_direction_p2()
+            self.assertIsNotNone(d2)
+            self.game.queue_direction_p2(d2)
+            self.game.last_tick_time = 0
+            self.game.update()
+            if self.game.is_round_over:
+                break
+        self.assertGreater(len(self.game.p2_snake), 1)
 
 if __name__ == "__main__":
     unittest.main()

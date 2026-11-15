@@ -10,7 +10,7 @@ from typing import List, Tuple, Dict, Any, Optional
 
 from .config import (
     GRID_WIDTH, GRID_HEIGHT, THEMES, DEFAULT_THEME,
-    VIEW_PHONE, VIEW_LCD, MODE_SNAKE1, MODE_SNAKE2,
+    VIEW_PHONE, VIEW_LCD, MODE_SNAKE1, MODE_SNAKE2, MODE_BLOCKADE,
     DIR_UP, DIR_DOWN, DIR_LEFT, DIR_RIGHT
 )
 from .game import SnakeGame
@@ -270,56 +270,62 @@ class Renderer:
         inv_attr = self.get_attr(PAIR_LCD_INVERSE, curses.A_BOLD)
         bonus_attr = self.get_attr(PAIR_BONUS, curses.A_BOLD)
 
-        # Row 0: Top Status Bar (Score, Level, Battery, Signal)
-        score_str = f"{game.score:04d}"
-        lvl_str = f"L{game.level}"
-
-        # Center status message
-        if game.bonus_bug:
-            bar_len = int((game.bonus_timer / max(1, game.bonus_max_timer)) * 6)
-            center_msg = f"★[{'■' * bar_len}{' ' * (6 - bar_len)}]"
-        elif game.is_paused:
-            center_msg = "[PAUSED]"
+        # Row 0: Top Status Bar
+        if game.game_mode == MODE_BLOCKADE:
+            p2_name = "CPU" if game.blockade_opponent == "cpu" else "P2"
+            left = f"ıll P1:{game.p1_wins:02d}"
+            right = f"{p2_name}:{game.p2_wins:02d} [■■■■]"
+            center_len = 40 - len(left) - len(right)
+            center_msg = f"RND {game.round_number}/{game.match_target}"
+            center = f"{center_msg:^{center_len}}"
+            status_line = left + center + right
+            self.safe_addstr(lcd_y, lcd_x, status_line[:40], normal_attr)
         else:
-            center_msg = f"HI: {highscore:04d}"
+            score_str = f"{game.score:04d}"
+            lvl_str = f"L{game.level}"
+            if game.bonus_bug:
+                bar_len = int((game.bonus_timer / max(1, game.bonus_max_timer)) * 6)
+                center_msg = f"★[{'■' * bar_len}{' ' * (6 - bar_len)}]"
+            elif game.is_paused:
+                center_msg = "[PAUSED]"
+            else:
+                center_msg = f"HI: {highscore:04d}"
 
-        left = f"ıll {score_str}"
-        right = f"{lvl_str} [■■■■]"
-        center_len = 40 - len(left) - len(right)
-        center = f"{center_msg:^{center_len}}"
-        status_line = left + center + right
-        self.safe_addstr(lcd_y, lcd_x, status_line[:40], normal_attr)
+            left = f"ıll {score_str}"
+            right = f"{lvl_str} [■■■■]"
+            center_len = 40 - len(left) - len(right)
+            center = f"{center_msg:^{center_len}}"
+            status_line = left + center + right
+            self.safe_addstr(lcd_y, lcd_x, status_line[:40], normal_attr)
 
         # Row 1: Divider line
-        # If maze has wraparound, show dashed line so player knows edge wraps
         div_char = "-" if not game.maze.has_wrap else "="
         self.safe_addstr(lcd_y + 1, lcd_x, div_char * 40, normal_attr)
 
         # Rows 2..11: The 20x10 Playfield (each cell is 2 characters wide)
-        snake_head = game.snake[0] if game.snake else None
-        snake_body = set(game.snake[1:]) if len(game.snake) > 1 else set()
+        p1_head = game.snake[0] if game.snake else None
+        p1_body = set(game.snake[1:]) if len(game.snake) > 1 else set()
+        p2_head = game.p2_snake[0] if game.p2_snake else None
+        p2_body = set(game.p2_snake[1:]) if len(game.p2_snake) > 1 else set()
         maze_walls = game.maze.walls
 
         for gy in range(GRID_HEIGHT):
             row_chars = []
             for gx in range(GRID_WIDTH):
                 pos = (gx, gy)
-                if pos == snake_head:
-                    # Head glyph based on direction
+                if pos == p1_head:
                     dx, dy = game.direction
-                    if dx == 1:
-                        cell = "►█"
-                    elif dx == -1:
-                        cell = "█◄"
-                    elif dy == -1:
-                        cell = "▲█"
-                    else:
-                        cell = "▼█"
-                elif pos in snake_body:
+                    cell = "►█" if dx == 1 else ("█◄" if dx == -1 else ("▲█" if dy == -1 else "▼█"))
+                elif pos in p1_body:
                     cell = "██"
-                elif pos == game.food:
+                elif pos == p2_head:
+                    dx, dy = game.p2_direction
+                    cell = "►▒" if dx == 1 else ("▒◄" if dx == -1 else ("▲▒" if dy == -1 else "▼▒"))
+                elif pos in p2_body:
+                    cell = "▒▒"
+                elif pos == game.food and game.game_mode != MODE_BLOCKADE:
                     cell = "◆ "
-                elif pos == game.bonus_bug:
+                elif pos == game.bonus_bug and game.game_mode != MODE_BLOCKADE:
                     cell = "※ "
                 elif pos in maze_walls:
                     cell = "▒▒"
@@ -329,6 +335,19 @@ class Renderer:
 
             line_str = "".join(row_chars)
             self.safe_addstr(lcd_y + 2 + gy, lcd_x, line_str, normal_attr)
+
+        # Blockade Round Over overlay
+        if game.game_mode == MODE_BLOCKADE and game.is_round_over and not game.is_game_over:
+            if game.round_winner == "tie":
+                round_box = "[  ROUND TIED!  ]"
+            elif game.round_winner == "p1":
+                round_box = "[  P1 SCORES!   ]"
+            else:
+                opp_name = "CPU" if game.blockade_opponent == "cpu" else "P2"
+                round_box = f"[  {opp_name} SCORES!   ]"
+            box_x = lcd_x + (40 - len(round_box)) // 2
+            box_y = lcd_y + 6
+            self.safe_addstr(box_y, box_x, round_box, inv_attr)
 
         # If Paused overlay
         if game.is_paused:
@@ -498,24 +517,41 @@ class Renderer:
     # Dialogs & Overlays
     # -------------------------------------------------------------
 
-    def render_game_over(self, score: int, highscore: int, is_new_record: bool):
+    def render_game_over(self, game_or_score, highscore: int, is_new_record: bool):
         lcd_y, lcd_x = self.get_lcd_origin()
         inv_attr = self.get_attr(PAIR_LCD_INVERSE, curses.A_BOLD)
         norm_attr = self.get_attr(PAIR_LCD_NORMAL)
 
-        lines = [
-            "============================",
-            "      G A M E   O V E R     ",
-            "============================",
-            f"   SCORE:        {score:05d}      ",
-            f"   RECORD:       {highscore:05d}      ",
-        ]
-        if is_new_record:
-            lines.append("    ★ NEW HIGH SCORE! ★     ")
+        is_blockade = hasattr(game_or_score, "game_mode") and game_or_score.game_mode == MODE_BLOCKADE
+        score = game_or_score.score if hasattr(game_or_score, "score") else game_or_score
+
+        if is_blockade:
+            p2_name = "CPU" if game_or_score.blockade_opponent == "cpu" else "P2"
+            winner_str = "P1 WINS MATCH!" if game_or_score.p1_wins >= game_or_score.match_target else f"{p2_name} WINS MATCH!"
+            lines = [
+                "============================",
+                f"    {winner_str:^20}    ",
+                "============================",
+                "       FINAL SCORE:         ",
+                f"   P1: {game_or_score.p1_wins}    vs    {p2_name}: {game_or_score.p2_wins}  ",
+                "                            ",
+                " [Press Any Key to Continue]",
+                "============================",
+            ]
         else:
-            lines.append("                            ")
-        lines.append(" [Press Any Key to Continue]")
-        lines.append("============================")
+            lines = [
+                "============================",
+                "      G A M E   O V E R     ",
+                "============================",
+                f"   SCORE:        {score:05d}      ",
+                f"   RECORD:       {highscore:05d}      ",
+            ]
+            if is_new_record:
+                lines.append("    ★ NEW HIGH SCORE! ★     ")
+            else:
+                lines.append("                            ")
+            lines.append(" [Press Any Key to Continue]")
+            lines.append("============================")
 
         box_width = 28
         start_x = lcd_x + (40 - box_width) // 2

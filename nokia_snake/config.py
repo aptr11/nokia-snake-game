@@ -103,8 +103,13 @@ THEMES = {
 DEFAULT_THEME = "classic_green"
 
 # Game Modes
-MODE_SNAKE1 = "snake1"  # 1997 Nokia 6110: Solid boundary walls, no wraparound
-MODE_SNAKE2 = "snake2"  # 2000 Nokia 3310: Mazes, wraparound edges, bonus bugs
+MODE_SNAKE1 = "snake1"    # 1997 Nokia 6110: Solid boundary walls, no wraparound
+MODE_SNAKE2 = "snake2"    # 2000 Nokia 3310: Mazes, wraparound edges, bonus bugs
+MODE_BLOCKADE = "blockade" # 1976 Gremlin Arcade: 2-Player/CPU dual permanent trail duel
+
+# Blockade Opponent Types
+BLOCKADE_OPPONENT_CPU = "cpu"
+BLOCKADE_OPPONENT_HUMAN = "human"
 
 # View Modes
 VIEW_PHONE = "phone"  # Render complete Nokia 3310 phone frame
