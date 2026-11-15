@@ -88,8 +88,8 @@ Built entirely in Python using standard library modules (`curses`, `wave`, `stru
 Clone the repository and run directly:
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/nokia-snake.git
-cd nokia-snake
+git clone https://github.com/aptr11/nokia-snake-game.git
+cd nokia-snake-game
 
 # Make executable and symlink to user's bin directory:
 chmod +x nokia_snake.py
@@ -102,8 +102,8 @@ Now you can run `nokia-snake` from any directory!
 ### Option 2: Pip Local Editable Install
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/nokia-snake.git
-cd nokia-snake
+git clone https://github.com/aptr11/nokia-snake-game.git
+cd nokia-snake-game
 pip install -e .
 ```
 
