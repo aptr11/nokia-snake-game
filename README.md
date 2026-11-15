@@ -56,10 +56,8 @@ Built entirely in Python using standard library modules (`curses`, `wave`, `stru
 Play Nokia Snake & Blockade directly in any web browser without needing a terminal!
 
 ### 1. Live Online (GitHub Pages)
-Once enabled in repo settings, the web version is accessible directly at:  
+Play directly online in your browser:  
 👉 **[https://aptr11.github.io/nokia-snake-game/](https://aptr11.github.io/nokia-snake-game/)**
-
-*(To enable on GitHub: Go to `Settings` → `Pages` → Build and deployment: `Deploy from a branch` → Select `main` / `/(root)` → Click Save).*
 
 ### 2. Local Browser Launch via CLI
 Run from your terminal:
